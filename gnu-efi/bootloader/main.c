@@ -50,6 +50,7 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	// Sets up the EFI environment for using special commands
 	InitializeLib(ImageHandle, SystemTable);
 	Print(L"Hello and welcome to the EFI world. \n\r"); // Prints string
+	Print(L"Initializing daily checks... \n\r");
 
 	EFI_FILE* Kernel = LoadFile(NULL, L"kernel.elf", ImageHandle, SystemTable); /* Our kernel EFI file over here, in variables */
 
@@ -67,7 +68,7 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
 	// Gets the 'elf' header for some information
 	// about the file
-	Elf32_Ehdr header; // Defining what our header is
+	Elf64_Ehdr header; // Defining what our header is
 	{
 		UINTN FileInfoSize;		 // Getting our file info
 		EFI_FILE_INFO* FileInfo; // and the size of it
@@ -102,8 +103,52 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	// Loads the ELF64 program header
 	Elf64_Phdr* phdrs;
 	{
-		Kernel->SetPosition(Kernel, header.e_phoff);
+		Kernel->SetPosition(Kernel, header.e_phoff); // Sets the offset in bytes when we read it
+		UINTN size = header.e_phnum * header.e_phentsize;
+		SystemTable->BootServices->AllocatePool(EfiLoaderData, size, (void**)&phdrs); // Allocates memory for the program header
+		Kernel->Read(Kernel, &size, phdrs); // Gets all of the bytes of the program header and put it into the struct
 	} 
+
+	// Loads the binary information
+	// We'll start off with a reference to the first program header
+	// and while the program header address is less than all of the program headers, we'll continue
+	for
+	(
+		Elf64_Phdr* phdr = phdrs;
+		(char*)phdr < (char*)phdrs + header.e_phnum * header.e_phentsize;
+		phdr = (Elf64_Phdr*)((char*)phdr + header.e_phentsize)
+	)
+	{
+		switch (phdr->p_type)
+		{
+			// In case that our type is PT_LOAD we're gonna need to
+			// allocate some pages to we could load the program to the memory
+			case PT_LOAD:
+			{	
+				int pages = (phdr->p_memsz + 0x1000 - 1) / 0x1000; // Getting and ounding our memsize (p_memsz)
+				Elf64_Addr segment = phdr->p_paddr;
+				SystemTable->BootServices->AllocatePages(AllocateAddress, EfiLoaderData, pages, &segment);
+
+				// Gets the correct offset to read from the kernel
+				Kernel->SetPosition(Kernel, phdr->p_offset);
+				UINTN size = phdr->p_filesz; // File size
+				Kernel->Read(Kernel, &size, (void*)segment);
+				break; // Gets out of the loop
+			}
+		}
+	}
+
+	// Sanity checks
+	Print(L"Performing sanity checks... \n\r");
+	// for (int i = 1; i < 6; i++)
+	// {
+	Print(L"Kernel Loaded \n\r");
+	// }
+
+	// Calling our "int _start function in /../kernel/"
+	int (*KernelStart)() = ((__attribute__((sysv_abi)) int (*)() ) header.e_entry);
+
+	Print(L"%d\r\n", KernelStart());
 
 	return EFI_SUCCESS; // Exit the UEFI application
 }
