@@ -51,8 +51,7 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	InitializeLib(ImageHandle, SystemTable);
 	Print(L"Hello and welcome to the EFI world. \n\r"); // Prints string
 
-	EFI_FILE* Kernel = LoadFile(NULL, L"kernel.elf", ImageHandle, SystemTable); /* Our kernel EFI file over here,
-					  															 in variables */
+	EFI_FILE* Kernel = LoadFile(NULL, L"kernel.elf", ImageHandle, SystemTable); /* Our kernel EFI file over here, in variables */
 
 	// Checks our LoadFile func is actually working
 	if (Kernel == NULL) 
@@ -103,7 +102,7 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	// Loads the ELF64 program header
 	Elf64_Phdr* phdrs;
 	{
-		
+		Kernel->SetPosition(Kernel, header.e_phoff);
 	} 
 
 	return EFI_SUCCESS; // Exit the UEFI application
