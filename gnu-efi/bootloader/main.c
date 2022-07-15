@@ -4,6 +4,42 @@
 
 typedef unsigned long long size_t;
 
+// Creates a struct which is useful for graphics drivers and GOP framebuffer
+typedef struct 
+{
+	void* BaseAddress;
+	size_t BufferSize;
+	unsigned int Width; // Screen width
+	unsigned int Height; // Screen height
+	unsigned int PixelPerScanLine; // This operates just like FPS, really useful there
+} FrameBuffer;
+
+FrameBuffer Framebuffer; // Creates framebuffer
+// Initializes GOP (Graphics Output Protocol)
+FrameBuffer* InitializeGOP()
+{
+	// Finds the GOP GUID
+	EFI_GUID gopGuid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
+	EFI_GRAPHICS_OUTPUT_PROTOCOL* gop;
+	EFI_STATUS status;
+
+	status = uefi_call_wrapper(BS->LocateProtocol, 3, &gopGuid, NULL, (void**)&gop); // Fixing our calling conventions so that everything can be call correctly
+	Print(L"Checking for Graphics...\n\r");
+	// Checks whether the GOP has been located
+	if (EFI_ERROR(status))
+	{
+		Print(L"Unable to Locate GOP, This means you cannot do any renderings.\n\r");
+		return NULL; // Prints error message, then halts
+	}
+	else
+	{
+		Print(L"GOP Located \n\r");
+	}
+	Framebuffer.BaseAddress = (void*)gop->Mode->FrameBufferBase;
+
+	return &Framebuffer;
+}
+
 EFI_FILE* LoadFile(EFI_FILE* Directory, CHAR16* Path, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 {
 	EFI_FILE* LoadedFile;
@@ -147,6 +183,9 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
 	// Calling our "int _start function in /../kernel/"
 	int (*KernelStart)() = ((__attribute__((sysv_abi)) int (*)() ) header.e_entry);
+
+	// Calling our GOP function
+	InitializeGOP();
 
 	Print(L"%d\r\n", KernelStart());
 
