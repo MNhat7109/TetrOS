@@ -36,6 +36,10 @@ FrameBuffer* InitializeGOP()
 		Print(L"GOP Located \n\r");
 	}
 	Framebuffer.BaseAddress = (void*)gop->Mode->FrameBufferBase;
+	Framebuffer.BufferSize = gop->Mode->FrameBufferSize;
+	Framebuffer.Width = gop->Mode->Info->HorizontalResolution;
+	Framebuffer.Height = gop->Mode->Info->VerticalResolution;
+	Framebuffer.PixelPerScanLine = gop->Mode->Info->PixelsPerScanLine;
 
 	return &Framebuffer;
 }
@@ -185,7 +189,22 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	int (*KernelStart)() = ((__attribute__((sysv_abi)) int (*)() ) header.e_entry);
 
 	// Calling our GOP function
-	InitializeGOP();
+	FrameBuffer* newBuffer = InitializeGOP();
+
+	Print(L"Base: 0x%x\n\rSize: 0x%x\n\rWidth: %d\n\rHeight: %d\n\rPixelPerScanLine: %d\n\r", 
+	newBuffer->BaseAddress, 
+	newBuffer->BufferSize, 
+	newBuffer->Width, 
+	newBuffer->Height,
+	newBuffer->PixelPerScanLine);
+
+	unsigned int y = 150; // Pixels down the screen we want to pass
+	unsigned int BBP = 4; // 4 bytes per pixel
+
+	for (unsigned int x = 0; x < newBuffer->Width / 2 * BBP; x++)
+	{
+		*(unsigned int*)(x + (y * newBuffer->PixelPerScanLine*BBP)+newBuffer->BaseAddress) = 0xFF00FFFF;
+	}
 
 	Print(L"%d\r\n", KernelStart());
 
