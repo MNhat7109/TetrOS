@@ -186,10 +186,12 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	// }
 
 	// Calling our "int _start function in /../kernel/"
-	int (*KernelStart)() = ((__attribute__((sysv_abi)) int (*)() ) header.e_entry);
+	void (*KernelStart)(FrameBuffer*) = ((__attribute__((sysv_abi)) void (*)(FrameBuffer*) ) header.e_entry);
 
 	// Calling our GOP function
 	FrameBuffer* newBuffer = InitializeGOP();
+
+	// Graphics information
 
 	Print(L"Base: 0x%x\n\rSize: 0x%x\n\rWidth: %d\n\rHeight: %d\n\rPixelPerScanLine: %d\n\r", 
 	newBuffer->BaseAddress, 
@@ -198,15 +200,17 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	newBuffer->Height,
 	newBuffer->PixelPerScanLine);
 
-	unsigned int y = 150; // Pixels down the screen we want to pass
-	unsigned int BBP = 4; // 4 bytes per pixel
+	// unsigned int y = 50; // Pixels down the screen we want to pass
+	// unsigned int BBP = 4; // 4 bytes per pixel
 
-	for (unsigned int x = 0; x < newBuffer->Width / 2 * BBP; x++)
-	{
-		*(unsigned int*)(x + (y * newBuffer->PixelPerScanLine*BBP)+newBuffer->BaseAddress) = 0xFF00FFFF;
-	}
+	// for (unsigned int x = 0; x < newBuffer->Width / 2 * BBP; x++)
+	// {
+	// 	*(unsigned int*)(x + (y * newBuffer->PixelPerScanLine*BBP)+newBuffer->BaseAddress) = 0xffffffff;
+	// }
 
-	Print(L"%d\r\n", KernelStart());
+	// Print(L"%d\r\n", KernelStart());
+
+	KernelStart(newBuffer);
 
 	return EFI_SUCCESS; // Exit the UEFI application
 }
