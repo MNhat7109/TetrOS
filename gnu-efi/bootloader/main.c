@@ -1,3 +1,6 @@
+#define PSF1_MAGIC0 0x36;
+#define PSF1_MAGIC1 0x04;
+
 #include <efi.h>
 #include <efilib.h>
 #include <elf.h>
@@ -13,6 +16,61 @@ typedef struct
 	unsigned int Height; // Screen height
 	unsigned int PixelPerScanLine; // This operates just like FPS, really useful there
 } FrameBuffer;
+
+// Font file header struct
+typedef struct
+{
+	unsigned char magic[2]; // Magic bytes
+	unsigned char mode; // PSF Mode
+	unsigned char charsize; // Character size in bytes
+} Psf1_Header;
+
+// Font struct
+typedef struct
+{
+	Psf1_Header* psf1_header; // Header
+	void* glyphBuffer;
+} Psf1_Font;
+
+Psf1_Font*LoadPsf1Font(EFI_FILE* Directory, CHAR16* Path, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
+{
+	EFI_FILE* Font = LoadFile(Directory, Path, ImageHandle, SystemTable);
+	if (Font == NULL) return NULL; // If Font file doesn't exist then return NULL
+
+	// Declare the font header
+	Psf1_Header* FontHeader;
+	SystemTable->BootServices->AllocatePool(EfiLoaderData, sizeof(Psf1_Header), (void**)&FontHeader); // Produces a memory chunk to put the header in
+	UINTN size = sizeof(Psf1_Header);
+	Font->Read(Font, &size, FontHeader);
+
+	// Check if the font is valid
+	if 
+	(FontHeader->magic[0] != PSF1_MAGIC0 || FontHeader->magic[1] != PSF1_MAGIC1)
+	{
+		return NULL;
+	}
+
+	UINTN glyphBufferSize = FontHeader->charsize * 256;
+	if (FontHeader->mode == 1)
+	{
+		// %12 glyph mode
+		glyphBufferSize = FontHeader->charsize * 512;
+	}
+
+	// Read our buffer
+	void* glyphBuffer;
+	{
+		Font->SetPosition(Font, sizeof(Psf1_Header));
+		SystemTable->BootServices->AllocatePool(EfiLoaderData, glyphBufferSize, (void**)&glyphBuffer);
+		Font->Read(Font, &glyphBufferSize, glyphBuffer);
+	}
+
+	Psf1_Font* FinishedFont;
+	SystemTable->BootServices->AllocatePool(EfiLoaderData, sizeof(Psf1_Font), (void**)&FinishedFont);
+	FinishedFont->psf1_header = FontHeader;
+	FinishedFont->glyphBuffer = glyphBuffer;
+	return FinishedFont;
+}
 
 FrameBuffer Framebuffer; // Creates framebuffer
 // Initializes GOP (Graphics Output Protocol)
@@ -190,6 +248,10 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
 	// Calling our GOP function
 	FrameBuffer* newBuffer = InitializeGOP();
+
+	// Calling fonts
+	Psf1_Font* newFont = LoadPsf1Font(NULL, L"zap-light20.psf", ImageHandle, SystemTable);
+
 
 	// Graphics information
 
