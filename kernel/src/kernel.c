@@ -12,12 +12,15 @@ typedef struct
 
 void _start(FrameBuffer* framebuffer)
 {
-    unsigned int y = 50; // Pixels down the screen we want to pass
+    unsigned int y = 0.5; // Pixels down the screen we want to pass
 	unsigned int BBP = 4; // 4 bytes per pixel
 
-	for (unsigned int x = 0; x < framebuffer->Width / 2 * BBP; x+=BBP)
+	for (y; y < framebuffer->Height/2*BBP; y+=0.5+BBP)
 	{
-		*(unsigned int*)(x + (y * framebuffer->PixelPerScanLine*BBP)+framebuffer->BaseAddress) = COLOR_YELLOW; // green
+		for (unsigned int x = 0; x < framebuffer->Width  * BBP; x+=BBP)
+		{
+			*(unsigned int*)(x + (y * framebuffer->PixelPerScanLine*BBP)+framebuffer->BaseAddress) = COLOR_BLUE; // green
+		}
 	}
 
     return;
