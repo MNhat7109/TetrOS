@@ -1,5 +1,5 @@
-#define PSF1_MAGIC0 0x36;
-#define PSF1_MAGIC1 0x04;
+#define PSF1_MAGIC0 0x36
+#define PSF1_MAGIC1 0x04
 
 #include <efi.h>
 #include <efilib.h>
