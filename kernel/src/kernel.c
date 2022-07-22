@@ -2,18 +2,6 @@
 
 
 
-void Print(FrameBuffer* framebuffer, Psf1_Font* psf1_font, unsigned int color, char* str)
-{
-	unsigned int x = 0;
-	char* chr = str;
-	while (*chr != 0)
-	{
-		putChar(framebuffer, psf1_font, color, *chr, x, 0);
-		x+=8;
-		chr++;
-	}
-}
-
 void _start(FrameBuffer* framebuffer, Psf1_Font* psf1_font)
 {
     // unsigned int y = 0.5; // Pixels down the screen we want to pass
@@ -26,6 +14,8 @@ void _start(FrameBuffer* framebuffer, Psf1_Font* psf1_font)
 	// 		*(unsigned int*)(x + (y * framebuffer->PixelPerScanLine*BBP)+framebuffer->BaseAddress) = COLOR_BLUE; // green
 	// 	}
 	// }
-	Print(framebuffer, psf1_font, 0xffffffff, "text");
+	Position.X = 0;
+	Position.Y = 16;
+	Print(framebuffer, psf1_font, COLOR_WHITE, "It's Tetris time");
     return;
 }

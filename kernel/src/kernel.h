@@ -1,13 +1,15 @@
-#ifndef COLOR_KERNEL_H
-#define COLOR_KERNEL_H
+#ifndef KERNEL_H
+#define KERNEL_H
+
 typedef unsigned long long size_t;
 
 // Color
-enum color
+enum vga_color
 {
     COLOR_RED = 0xffff0000,
     COLOR_BLUE = 0xff0000ff,
     COLOR_YELLOW = 0xffffff00,
+    COLOR_WHITE = 0xffffffff,
 };
 
 typedef struct 
@@ -18,6 +20,12 @@ typedef struct
 	unsigned int Height; // Screen height
 	unsigned int PixelPerScanLine; // This operates just like FPS, really useful there
 } FrameBuffer;
+
+typedef struct
+{
+    unsigned int X; // Height
+    unsigned int Y; // Width
+} Point;
 
 // Font file header struct
 typedef struct
@@ -34,7 +42,8 @@ typedef struct
 	void* glyphBuffer;
 } Psf1_Font;
 
-void putChar(FrameBuffer* framebuffer, Psf1_Font* psf1_font, unsigned int color, char chr, unsigned int xOff, unsigned int yOff)
+void putChar(FrameBuffer* framebuffer, Psf1_Font* psf1_font, 
+            unsigned int color, char chr, unsigned int xOff, unsigned int yOff) // Puts the character in the screen
 {
     unsigned int* pixPtr = (unsigned int*)framebuffer->BaseAddress;
     char* fontPtr = psf1_font->glyphBuffer + (chr * psf1_font->psf1_header->charsize);
@@ -51,5 +60,18 @@ void putChar(FrameBuffer* framebuffer, Psf1_Font* psf1_font, unsigned int color,
         fontPtr++;
     }
 }
+
+Point Position; // Our Text Position
+void Print(FrameBuffer* framebuffer, Psf1_Font* psf1_font, unsigned int color, char* str) // Prints a string
+{
+	char* chr = str;
+	while (*chr != 0)
+	{
+		putChar(framebuffer, psf1_font, color, *chr, Position.X, Position.Y);
+		Position.X+=8;
+		chr++;
+	}
+}
+
 
 #endif
