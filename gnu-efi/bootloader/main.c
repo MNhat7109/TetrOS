@@ -244,7 +244,7 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	// }
 
 	// Calling our "int _start function in /../kernel/"
-	void (*KernelStart)(FrameBuffer*, Psf1_Font*) = ((__attribute__((sysv_abi)) void (*)(FrameBuffer*) ) header.e_entry);
+	void (*KernelStart)(FrameBuffer*, Psf1_Font*) = ((__attribute__((sysv_abi)) void (*)(FrameBuffer*, Psf1_Font*) ) header.e_entry);
 
 	// Calling fonts
 	Psf1_Font* newFont = LoadPsf1Font(NULL, L"zap-light16.psf", ImageHandle, SystemTable);
