@@ -1,5 +1,5 @@
-#define PSF1_MAGIC0 0x36;
-#define PSF1_MAGIC1 0x04;
+#define PSF1_MAGIC0 0x36
+#define PSF1_MAGIC1 0x04
 
 #include <efi.h>
 #include <efilib.h>
@@ -31,46 +31,6 @@ typedef struct
 	Psf1_Header* psf1_header; // Header
 	void* glyphBuffer;
 } Psf1_Font;
-
-Psf1_Font*LoadPsf1Font(EFI_FILE* Directory, CHAR16* Path, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
-{
-	EFI_FILE* Font = LoadFile(Directory, Path, ImageHandle, SystemTable);
-	if (Font == NULL) return NULL; // If Font file doesn't exist then return NULL
-
-	// Declare the font header
-	Psf1_Header* FontHeader;
-	SystemTable->BootServices->AllocatePool(EfiLoaderData, sizeof(Psf1_Header), (void**)&FontHeader); // Produces a memory chunk to put the header in
-	UINTN size = sizeof(Psf1_Header);
-	Font->Read(Font, &size, FontHeader);
-
-	// Check if the font is valid
-	if 
-	(FontHeader->magic[0] != PSF1_MAGIC0 || FontHeader->magic[1] != PSF1_MAGIC1)
-	{
-		return NULL;
-	}
-
-	UINTN glyphBufferSize = FontHeader->charsize * 256;
-	if (FontHeader->mode == 1)
-	{
-		// %12 glyph mode
-		glyphBufferSize = FontHeader->charsize * 512;
-	}
-
-	// Read our buffer
-	void* glyphBuffer;
-	{
-		Font->SetPosition(Font, sizeof(Psf1_Header));
-		SystemTable->BootServices->AllocatePool(EfiLoaderData, glyphBufferSize, (void**)&glyphBuffer);
-		Font->Read(Font, &glyphBufferSize, glyphBuffer);
-	}
-
-	Psf1_Font* FinishedFont;
-	SystemTable->BootServices->AllocatePool(EfiLoaderData, sizeof(Psf1_Font), (void**)&FinishedFont);
-	FinishedFont->psf1_header = FontHeader;
-	FinishedFont->glyphBuffer = glyphBuffer;
-	return FinishedFont;
-}
 
 FrameBuffer Framebuffer; // Creates framebuffer
 // Initializes GOP (Graphics Output Protocol)
@@ -129,6 +89,46 @@ EFI_FILE* LoadFile(EFI_FILE* Directory, CHAR16* Path, EFI_HANDLE ImageHandle, EF
 	}
 	// Otherwise we're just gonna return our LoadedFile
 	return LoadedFile;
+}
+
+Psf1_Font*LoadPsf1Font(EFI_FILE* Directory, CHAR16* Path, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
+{
+	EFI_FILE* Font = LoadFile(Directory, Path, ImageHandle, SystemTable);
+	if (Font == NULL) return NULL; // If Font file doesn't exist then return NULL
+
+	// Declare the font header
+	Psf1_Header* FontHeader;
+	SystemTable->BootServices->AllocatePool(EfiLoaderData, sizeof(Psf1_Header), (void**)&FontHeader); // Produces a memory chunk to put the header in
+	UINTN size = sizeof(Psf1_Header);
+	Font->Read(Font, &size, FontHeader);
+
+	// Check if the font is valid
+	if 
+	(FontHeader->magic[0] != PSF1_MAGIC0 || FontHeader->magic[1] != PSF1_MAGIC1)
+	{
+		return NULL;
+	}
+
+	UINTN glyphBufferSize = FontHeader->charsize * 256;
+	if (FontHeader->mode == 1)
+	{
+		// %12 glyph mode
+		glyphBufferSize = FontHeader->charsize * 512;
+	}
+
+	// Read our buffer
+	void* glyphBuffer;
+	{
+		Font->SetPosition(Font, sizeof(Psf1_Header));
+		SystemTable->BootServices->AllocatePool(EfiLoaderData, glyphBufferSize, (void**)&glyphBuffer);
+		Font->Read(Font, &glyphBufferSize, glyphBuffer);
+	}
+
+	Psf1_Font* FinishedFont;
+	SystemTable->BootServices->AllocatePool(EfiLoaderData, sizeof(Psf1_Font), (void**)&FinishedFont);
+	FinishedFont->psf1_header = FontHeader;
+	FinishedFont->glyphBuffer = glyphBuffer;
+	return FinishedFont;
 }
 
 // Checks if our ELF file is executable, and our header values are correct
@@ -244,14 +244,21 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	// }
 
 	// Calling our "int _start function in /../kernel/"
-	void (*KernelStart)(FrameBuffer*) = ((__attribute__((sysv_abi)) void (*)(FrameBuffer*) ) header.e_entry);
+	void (*KernelStart)(FrameBuffer*, Psf1_Font*) = ((__attribute__((sysv_abi)) void (*)(FrameBuffer*) ) header.e_entry);
+
+	// Calling fonts
+	Psf1_Font* newFont = LoadPsf1Font(NULL, L"zap-light16.psf", ImageHandle, SystemTable);
+	if (newFont == NULL)
+	{
+		Print(L"Font not found, corrupted or invalid\n\r");
+	}
+	else
+	{
+		Print(L"Font found, CharSize: %d\n\r", newFont->psf1_header->charsize);
+	}
 
 	// Calling our GOP function
 	FrameBuffer* newBuffer = InitializeGOP();
-
-	// Calling fonts
-	Psf1_Font* newFont = LoadPsf1Font(NULL, L"zap-light20.psf", ImageHandle, SystemTable);
-
 
 	// Graphics information
 
@@ -272,7 +279,7 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
 	// Print(L"%d\r\n", KernelStart());
 
-	KernelStart(newBuffer);
+	KernelStart(newBuffer, newFont);
 
 	return EFI_SUCCESS; // Exit the UEFI application
 }
