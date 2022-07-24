@@ -3,14 +3,15 @@
 #include <stdint.h>
 #include "math.h"
 #include "FrameBuffer.h"
+#include "font.h"
 
 class KernelEngine
 {
     public:
     Point Position; // Our Text Position
-    void putChar(FrameBuffer* framebuffer, Psf1_Font* psf1_font, unsigned int color, const char chr, unsigned int xOff, unsigned int yOff);
-    void Print(FrameBuffer* framebuffer, Psf1_Font* psf1_font, unsigned int color, const char* str);
-}
+    void putChar(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const char chr, unsigned int xOff, unsigned int yOff, unsigned int color = 0xffffffff);
+    void Print(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const char* str, unsigned int color = 0xffffffff);
+};
 // Color
 enum vga_color
 {
@@ -22,20 +23,6 @@ enum vga_color
 
 
 
-// Font file header struct
-typedef struct
-{
-	unsigned char magic[2]; // Magic bytes
-	unsigned char mode; // PSF Mode
-	unsigned char charsize; // Character size in bytes
-} Psf1_Header;
-
-// Font struct
-typedef struct
-{
-	Psf1_Header* psf1_header; // Header
-	void* glyphBuffer;
-} Psf1_Font;
 
 
 
