@@ -1,7 +1,7 @@
 #include "KernelEngine.h"
 #include "FrameBuffer.h"
 
-void KernelEngine::putChar(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const char chr, unsigned int xOff, unsigned int yOff, unsigned int color = 0xffffffff) // Puts the character in the screen
+void KernelEngine::putChar(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const char chr, unsigned int xOff, unsigned int yOff, unsigned int color) // Puts the character in the screen
 {
     unsigned int* pixPtr = (unsigned int*)framebuffer->BaseAddress;
     char* fontPtr = (char*)psf1_font->glyphBuffer + (chr * psf1_font->psf1_header->charsize);
@@ -19,7 +19,7 @@ void KernelEngine::putChar(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const
     }
 }
 
-void KernelEngine::Print(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const char* str, unsigned int color = 0xffffffff) // Prints a string
+void KernelEngine::Print(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const char* str, unsigned int color) // Prints a string
 {
 	char* chr = (char*)str;
 	while (*chr != 0)
@@ -27,10 +27,15 @@ void KernelEngine::Print(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const c
 		putChar(framebuffer, psf1_font, *chr, Position.X, Position.Y, color);
 		Position.X+=8;
 		
-        if (Position.X + 8 > framebuffer->Width || chr == "\n")
+        if (Position.X + 8 > framebuffer->Width)
         {
             Position.X = 0;
             Position.Y +=16;
+        }
+        if (*chr == '\n')
+        {
+            Position.X = 0;
+            Position.Y += 16;
         }
         chr++;
 	}

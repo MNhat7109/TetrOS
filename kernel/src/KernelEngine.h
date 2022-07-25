@@ -9,7 +9,7 @@ class KernelEngine
 {
     public:
     Point Position; // Our Text Position
-    void putChar(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const char chr, unsigned int xOff, unsigned int yOff, unsigned int color = 0xffffffff);
+    void putChar(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const char chr, unsigned int xOff, unsigned int yOff, unsigned int color);
     void Print(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const char* str, unsigned int color = 0xffffffff);
 };
 // Color

@@ -10,9 +10,9 @@ extern "C" void _start(FrameBuffer* framebuffer, Psf1_Font* psf1_font)
 	KernelEngine newRenderer; 
 
 	// Text Positions
-	newRenderer.Position = {15,50}; // Sets xy coordinates, x is width and y is height
+	newRenderer.Position = {0,50}; // Sets xy coordinates, x is width and y is height
 
 	// Print!
-	newRenderer.Print(framebuffer, psf1_font, "It's tetris time");
+	newRenderer.Print(framebuffer, psf1_font, "It's tetris time\nOr is it?");
     return;
 }
