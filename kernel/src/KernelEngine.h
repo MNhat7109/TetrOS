@@ -8,7 +8,11 @@
 class KernelEngine
 {
     public:
+    BasicRenderer(FrameBuffer* TargetFramebuffer, Psf1_Font* psf1_font);
     Point Position; // Our Text Position
+    FrameBuffer* TargetFramebuffer;
+    Psf1_Font* psf1_font;
+    unsigned int color;
     void putChar(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const char chr, unsigned int xOff, unsigned int yOff, unsigned int color);
     void Print(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const char* str, unsigned int color = 0xffffffff);
 };
