@@ -1,12 +1,18 @@
 #include "KernelEngine.h"
 #include "FrameBuffer.h"
 
-KernelEngine::BasicRenderer(FrameBuffer* TargetFramebuffer, Psf1_Font* psf1_font);
-
-void KernelEngine::putChar(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const char chr, unsigned int xOff, unsigned int yOff, unsigned int color) // Puts the character in the screen
+KernelEngine::KernelEngine(FrameBuffer* targetFramebuffer, Psf1_Font* psf1_font)
 {
-    unsigned int* pixPtr = (unsigned int*)framebuffer->BaseAddress;
-    char* fontPtr = (char*)psf1_font->glyphBuffer + (chr * psf1_font->psf1_header->charsize);
+    TargetFramebuffer = targetFramebuffer;
+    Psf1_font = psf1_font;
+    Color = 0xffffffff;
+    Position = {0,0};
+}
+
+void KernelEngine::putChar(const char chr, unsigned int xOff, unsigned int yOff) // Puts the character in the screen
+{
+    unsigned int* pixPtr = (unsigned int*)TargetFramebuffer->BaseAddress;
+    char* fontPtr = (char*)Psf1_font->glyphBuffer + (chr * Psf1_font->psf1_header->charsize);
     for (unsigned long y = yOff; y < yOff+16; y++)
     {
         for (unsigned long x = xOff; x < xOff+8; x++)
@@ -14,22 +20,22 @@ void KernelEngine::putChar(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const
             // Checks if the bit is on or off
             if ((*fontPtr & (0b10000000 >> (x-xOff))) > 0)
             {
-                *(unsigned int*)(pixPtr+x+(y*framebuffer->PixelPerScanLine)) = color;
+                *(unsigned int*)(pixPtr+x+(y*TargetFramebuffer->PixelPerScanLine)) = Color;
             }
         }
         fontPtr++;
     }
 }
 
-void KernelEngine::Print(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const char* str, unsigned int color) // Prints a string
+void KernelEngine::Print(const char* str) // Prints a string
 {
 	char* chr = (char*)str;
 	while (*chr != 0)
 	{
-		putChar(framebuffer, psf1_font, *chr, Position.X, Position.Y, color);
+		putChar(*chr, Position.X, Position.Y);
 		Position.X+=8;
 		
-        if (Position.X + 8 > framebuffer->Width)
+        if (Position.X + 8 > TargetFramebuffer->Width)
         {
             Position.X = 0;
             Position.Y +=16;
@@ -41,4 +47,9 @@ void KernelEngine::Print(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const c
         }
         chr++;
 	}
+}
+
+void KernelEngine::Clear(void)
+{
+    
 }

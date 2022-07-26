@@ -7,12 +7,15 @@
 extern "C" void _start(FrameBuffer* framebuffer, Psf1_Font* psf1_font)
 {
 	// Class declarations
-	KernelEngine newRenderer; 
-
-	// Text Positions
-	newRenderer.Position = {0,50}; // Sets xy coordinates, x is width and y is height
+	KernelEngine newRenderer = KernelEngine(framebuffer, psf1_font); 
 
 	// Print!
-	newRenderer.Print(framebuffer, psf1_font, "It's tetris time\nOr is it?");
+	for (unsigned int y = 0;y > framebuffer->Width;y++)
+	{
+		for (unsigned int x = 0;  x > framebuffer->Height; x++)
+		{
+				newRenderer.Print(" ");
+		}
+	}
     return;
 }
