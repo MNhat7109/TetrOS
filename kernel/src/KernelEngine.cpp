@@ -1,6 +1,8 @@
 #include "KernelEngine.h"
 #include "FrameBuffer.h"
 
+KernelEngine::BasicRenderer(FrameBuffer* TargetFramebuffer, Psf1_Font* psf1_font);
+
 void KernelEngine::putChar(FrameBuffer* framebuffer, Psf1_Font* psf1_font, const char chr, unsigned int xOff, unsigned int yOff, unsigned int color) // Puts the character in the screen
 {
     unsigned int* pixPtr = (unsigned int*)framebuffer->BaseAddress;
