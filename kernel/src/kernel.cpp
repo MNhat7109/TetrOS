@@ -9,12 +9,13 @@ extern "C" void _start(FrameBuffer* framebuffer, Psf1_Font* psf1_font)
 	// Class declarations
 	KernelEngine newRenderer = KernelEngine(framebuffer, psf1_font); 
 
-	// Print!
-	for (unsigned int y = 0;y > framebuffer->Width;y++)
+	unsigned int BBP = 4;
+	
+	for (unsigned int y = 0; y < 50; y++)
 	{
-		for (unsigned int x = 0;  x > framebuffer->Height; x++)
+		for (unsigned int x = 0; x < framebuffer->Width; x++)
 		{
-				newRenderer.Print(" ");
+			*(unsigned int*)(x+(y*framebuffer->Width*BBP)+(unsigned int*)framebuffer->BaseAddress) = 0xffff0000;
 		}
 	}
     return;
