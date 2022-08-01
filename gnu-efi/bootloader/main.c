@@ -243,9 +243,6 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	Print(L"Kernel Loaded \n\r");
 	// }
 
-	// Calling our "int _start function in /../kernel/"
-	void (*KernelStart)(FrameBuffer*, Psf1_Font*) = ((__attribute__((sysv_abi)) void (*)(FrameBuffer*, Psf1_Font*) ) header.e_entry);
-
 	// Calling fonts
 	Psf1_Font* newFont = LoadPsf1Font(NULL, L"zap-light16.psf", ImageHandle, SystemTable);
 	if (newFont == NULL)
@@ -269,15 +266,9 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	newBuffer->Height,
 	newBuffer->PixelPerScanLine);
 
-	// unsigned int y = 50; // Pixels down the screen we want to pass
-	// unsigned int BBP = 4; // 4 bytes per pixel
+	// Calling our "int _start function in /../kernel/"
+	void (*KernelStart)(FrameBuffer*, Psf1_Font*) = ((__attribute__((sysv_abi)) void (*)(FrameBuffer*, Psf1_Font*) ) header.e_entry);
 
-	// for (unsigned int x = 0; x < newBuffer->Width / 2 * BBP; x++)
-	// {
-	// 	*(unsigned int*)(x + (y * newBuffer->PixelPerScanLine*BBP)+newBuffer->BaseAddress) = 0xffffffff;
-	// }
-
-	// Print(L"%d\r\n", KernelStart());
 
 	KernelStart(newBuffer, newFont);
 
