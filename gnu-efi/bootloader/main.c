@@ -143,6 +143,14 @@ int memcmp(const void* aptr, const void* bptr, size_t n)
 	return 0;
 }
 
+typedef struct
+{
+	FrameBuffer* Framebuffer;
+	Psf1_Font* psf1_font;
+	EFI_MEMORY_DESCRIPTOR* mMap;
+	UINTN mMapSize, mMapDescSize;
+} BootInfo;
+
 EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	
 	// Sets up the EFI environment for using special commands
@@ -266,11 +274,30 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	newBuffer->Height,
 	newBuffer->PixelPerScanLine);
 
-	// Calling our "int _start function in /../kernel/"
-	void (*KernelStart)(FrameBuffer*, Psf1_Font*) = ((__attribute__((sysv_abi)) void (*)(FrameBuffer*, Psf1_Font*) ) header.e_entry);
+	// Get EFI memory map
+	EFI_MEMORY_DESCRIPTOR* Map = NULL;
+	UINTN MapSize, MapKey, DescriptorSize; //  MapKey is for ExitBootServices()
+	UINT32 DescriptorVersion;
+	{
+		SystemTable->BootServices->GetMemoryMap(&MapSize, Map, &MapKey, &DescriptorSize, &DescriptorVersion);
+		SystemTable->BootServices->AllocatePool(EfiLoaderData, MapSize, (void**)&Map);
+		SystemTable->BootServices->GetMemoryMap(&MapSize, Map, &MapKey, &DescriptorSize, &DescriptorVersion);
+	}
 
+	// Calling our function in /../kernel/
+	void (*KernelStart)(BootInfo*) = ((__attribute__((sysv_abi)) void (*)(BootInfo*) ) header.e_entry);
 
-	KernelStart(newBuffer, newFont);
+	// Declaring BootInfo struct
+	BootInfo bootInfo;
+	bootInfo.Framebuffer = newBuffer;
+	bootInfo.psf1_font = newFont;
+	bootInfo.mMap = Map;
+	bootInfo.mMapSize = MapSize;
+	bootInfo.mMapDescSize = DescriptorSize;
+
+	SystemTable->BootServices->ExitBootServices(ImageHandle, MapKey); // Exit the boot services
+
+	KernelStart(&bootInfo); // Load the kernel
 
 	return EFI_SUCCESS; // Exit the UEFI application
 }
