@@ -41,7 +41,7 @@ void KernelEngine::Print(const char* str) // Prints a string
             Position.Y +=16;
         }
         if (*chr == '\n')
-        {            
+        {
             Position.X = 0;
             Position.Y += 16;
         }

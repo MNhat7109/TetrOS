@@ -1,6 +1,12 @@
 # include "BootInfo.h"
 # include "cstr.h"
 # include "memory/efiMemory.h"
+# include "memory/Bitmap.h"
+# include "paging/PFAllocator.h"
+# include "paging/PageMapIndexer.h"
+
+extern uint64_t _KernelStart;
+extern uint64_t _KernelEnd;
 
 extern "C" void _start(BootInfo* bootInfo)
 {
@@ -9,18 +15,15 @@ extern "C" void _start(BootInfo* bootInfo)
 	
 	uint64_t mMapEntries = bootInfo->mMapSize / bootInfo->mMapDescSize;
 
-	newRenderer.Print(to_string(GetMemorySize(bootInfo->mMap, mMapEntries, bootInfo->mMapDescSize)));
-	// for (int i =0 ; i < mMapEntries ; i++)
-	// {
-	// 	efiMemoryDescriptor* desc = (efiMemoryDescriptor*)((uint64_t)bootInfo->mMap + (i*bootInfo->mMapDescSize));
-	// 	newRenderer.Position = {0, newRenderer.Position.Y+16}; // Set Cursor Position
-	// 	newRenderer.Print(efiMemoryTypeStrings[desc->type]);
-	// 	newRenderer.Color = COLOR_YELLOW; // Set Color
-	// 	newRenderer.Print(" ");
-	// 	newRenderer.Print(to_string(desc->numPages * 4));
-	// 	newRenderer.Print(" KB");
-	// 	newRenderer.Color = COLOR_WHITE;
-	// }
+	PFallocator newAlloc;
+
+	newAlloc.ReadEFIMemoryMap(bootInfo->mMap, bootInfo->mMapSize, bootInfo->mMapDescSize);
+	uint64_t kernelSize = (uint64_t)&_KernelEnd - (uint64_t)&_KernelStart;
+	uint64_t kernelPages = (uint64_t)kernelSize / 4096 +1;
+	newAlloc.LockPages(&_KernelStart, kernelPages);
+
+	PageMapIndexer pageIndexer = PageMapIndexer(0x1000);
+	
 
     return;
 }

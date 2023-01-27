@@ -20,4 +20,9 @@ void Bitmap::Set(uint64_t index, bool value)
     uint8_t bitIndexer = 0b10000000 >> bitIndex;
 
     Buffer[byteIndex] &= ~bitIndexer;
+
+    if (value)
+    {
+        Buffer[byteIndex] |= bitIndexer;
+    }
 }
