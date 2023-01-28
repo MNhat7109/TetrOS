@@ -4,6 +4,7 @@ uint64_t freeMemory;
 uint64_t reservedMemory;
 uint64_t usedMemory;
 bool init = false;
+PFallocator GlobalAllocator;
 
 void PFallocator::InitBitmap(size_t bitmapSize, void* bufferAddress)
 {

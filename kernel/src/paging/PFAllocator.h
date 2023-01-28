@@ -27,3 +27,5 @@ class PFallocator
     void ReleasePages(void* address, uint64_t pageCount);
 
 };
+
+extern PFallocator GlobalAllocator;
