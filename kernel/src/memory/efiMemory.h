@@ -1,14 +1,12 @@
-# pragma once
+#pragma once
+#include <stdint.h>
 
-# include <stdint.h>
-
-struct efiMemoryDescriptor
-{
-    uint32_t type; // Type of memory
-    void* physAddr; // Physical address
-    void* virtAddr; // Virtual address
-    uint64_t numPages, attrib;
+struct EFI_MEMORY_DESCRIPTOR {
+    uint32_t type;
+    void* physAddr;
+    void* virtAddr; 
+    uint64_t numPages;
+    uint64_t attribs;
 };
 
- // Declare types
- extern const char* efiMemoryTypeStrings[];
+extern const char* EFI_MEMORY_TYPE_STRINGS[];
