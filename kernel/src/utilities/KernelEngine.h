@@ -2,6 +2,7 @@
 #include "math.h"
 #include "Framebuffer.h"
 #include "simpleFonts.h"
+#include <stdint.h>
 
 class BasicRenderer{
     public:
@@ -12,6 +13,10 @@ class BasicRenderer{
     unsigned int Colour;
     void Print(const char* str);
     void PutChar(char chr, unsigned int xOff, unsigned int yOff);
+    void Clear(uint32_t colour);
+    void Next();
 };
 
 // TODO: create Color struct/enum
+
+extern BasicRenderer* GlobalRenderer;

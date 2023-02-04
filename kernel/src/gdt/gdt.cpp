@@ -6,6 +6,6 @@ GDT DefaultGDT = {
     {0,0,0,0x9a,0xa0,0}, // kernel code
     {0,0,0,0x92,0xa0,0}, // kernel data
     {0,0,0,0x00,0x00,0}, // User null
-    {0,0,0,0x9a,0xa0,0}, // kernel code
-    {0,0,0,0x92,0xa0,0}, // kernel data
+    {0,0,0,0x9a,0xa0,0}, // User code
+    {0,0,0,0x92,0xa0,0}, // User data
 };

@@ -3,13 +3,13 @@
 #include <stdint.h>
 #include "KernelEngine.h"
 #include "cstr.h"
-#include "efiMemory.h"
-#include "memory.h"
-#include "Bitmap.h"
-#include "paging/PageFrameAllocator.h"
-#include "paging/PageMapIndexer.h"
-#include "paging/paging.h"
-#include "paging/PageTableManager.h"
+#include "../memory/efiMemory.h"
+#include "../memory/memory.h"
+#include "../memory/Bitmap.h"
+#include "../paging/PageFrameAllocator.h"
+#include "../paging/PageMapIndexer.h"
+#include "../paging/paging.h"
+#include "../paging/PageTableManager.h"
 
 struct BootInfo {
 	Framebuffer* framebuffer;

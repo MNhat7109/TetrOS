@@ -1,11 +1,37 @@
 #include "KernelEngine.h"
 
+BasicRenderer* GlobalRenderer;
+
 BasicRenderer::BasicRenderer(Framebuffer* targetFramebuffer, PSF1_FONT* psf1_Font)
 {
     TargetFramebuffer = targetFramebuffer;
     PSF1_Font = psf1_Font;
     Colour = 0xffffffff;
     CursorPosition = {0, 0};
+}
+
+void BasicRenderer::Clear(uint32_t colour)
+{
+    uint64_t fbBase = (uint64_t)TargetFramebuffer->BaseAddress;
+    uint64_t bytesPerScanLine = (uint64_t)TargetFramebuffer->PixelsPerScanLine * 4;
+    uint64_t fbHeight = TargetFramebuffer->Height;
+    uint64_t fbSize = TargetFramebuffer->BufferSize;
+
+    for (int verticalScanLine = 0; verticalScanLine < fbHeight; verticalScanLine++)
+    {
+        uint64_t pixPtrBase = fbBase + (bytesPerScanLine * verticalScanLine);
+        for (uint32_t* pixPtr = (uint32_t*)pixPtrBase; pixPtr < (uint32_t*)(pixPtrBase + bytesPerScanLine); pixPtr++)
+        {
+            *pixPtr = colour;
+        }
+    }
+    
+}
+
+void BasicRenderer::Next()
+{
+    CursorPosition.X = 0;
+    CursorPosition.Y += 16;
 }
 
 void BasicRenderer::Print(const char* str)
