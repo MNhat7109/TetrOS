@@ -8,4 +8,8 @@ void Panic(char* panicMessage)
     GlobalRenderer->CursorPosition = {0,64};
 
     GlobalRenderer->Colour = 0;
+    GlobalRenderer->Print("Sorry, an error occurred.");
+
+    GlobalRenderer->Next();
+    GlobalRenderer->Print(panicMessage);
 }
