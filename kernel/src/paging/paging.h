@@ -1,5 +1,5 @@
 #pragma once
-#include <stdint.h>
+#include "../util/typedef.h"
 
 enum PT_Flag {
     Present = 0,
@@ -16,11 +16,11 @@ enum PT_Flag {
 };
 
 struct PageDirectoryEntry {
-    uint64_t Value;
+    u64 Value;
     void SetFlag(PT_Flag flag, bool enabled);
     bool GetFlag(PT_Flag flag);
-    void SetAddress(uint64_t address);
-    uint64_t GetAddress();
+    void SetAddress(u64 address);
+    u64 GetAddress();
 };
 
 struct PageTable { 

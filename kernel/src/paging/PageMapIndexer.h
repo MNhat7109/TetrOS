@@ -1,11 +1,11 @@
 #pragma once
-#include <stdint.h>
+#include "../util/typedef.h"
 
 class PageMapIndexer {
     public:
-        PageMapIndexer(uint64_t virtualAddress);
-        uint64_t PDP_i;
-        uint64_t PD_i;
-        uint64_t PT_i;
-        uint64_t P_i;
+        PageMapIndexer(u64 virtualAddress);
+        u64 PDP_i;
+        u64 PD_i;
+        u64 PT_i;
+        u64 P_i;
 };

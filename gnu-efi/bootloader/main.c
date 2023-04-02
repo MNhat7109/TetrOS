@@ -1,47 +1,20 @@
 #define PSF1_MAGIC0 0x36
 #define PSF1_MAGIC1 0x04
 
-# define PSF2_MAGIC0 0x72
-# define PSF2_MAGIC1 0xb5
-# define PSF2_MAGIC2 0x4a
-# define PSF2_MAGIC3 0x86
+#define PSF_MAGIC3 0x86
+#define PSF_MAGIC2 0x4a
+#define PSF_MAGIC1 0xb5
+#define PSF_MAGIC0 0x72
 
+#define PSF_FONT_1 1
+#define PSF_FONT_2 2
+#define PSF_FONT_UK 4
+ 
 #include <efi.h>
 #include <efilib.h>
 #include <elf.h>
 
 typedef unsigned long long size_t;
-
-void* malloc(UINTN poolSize)
-{
-    EFI_STATUS status;
-    void * handle;
-    status = uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, poolSize, &handle);
-
-    if(status == EFI_OUT_OF_RESOURCES)
-    {
-        return 0;
-    }
-    else if(status == EFI_INVALID_PARAMETER)
-    {
-        return 0;
-    }
-    else
-    {
-        return handle;
-    }
-}
-
-void free(void * pool)
-{
-    EFI_STATUS status;
-    status = uefi_call_wrapper(BS->FreePool, 1, pool);
-
-    if(status == EFI_INVALID_PARAMETER)
-    {
-        Print(L"invalid pool pointer\n");
-    }
-}
 
 // Creates a struct which is useful for graphics drivers and GOP framebuffer
 typedef struct 
@@ -145,63 +118,26 @@ EFI_FILE* LoadFile(EFI_FILE* Directory, CHAR16* Path, EFI_HANDLE ImageHandle, EF
 	return LoadedFile;
 }
 
-Psf1_Font*LoadPsf1Font(EFI_FILE* Directory, CHAR16* Path, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
+Psf2_Font*LoadPsf2Font(EFI_FILE* Directory, CHAR16* Path, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
 {
 	EFI_FILE* Font = LoadFile(Directory, Path, ImageHandle, SystemTable);
 	if (Font == NULL) return NULL; // If Font file doesn't exist then return NULL
 
 	// Declare the font header
-	Psf1_Header* FontHeader;
-	SystemTable->BootServices->AllocatePool(EfiLoaderData, sizeof(Psf1_Header), (void**)&FontHeader); // Produces a memory chunk to put the header in
-	UINTN size = sizeof(Psf1_Header);
-	Font->Read(Font, &size, FontHeader);
-
-	// Check if the font is valid
-	if 
-	(FontHeader->magic[0] != PSF1_MAGIC0 || FontHeader->magic[1] != PSF1_MAGIC1)
-	{
-		return NULL;
-	}
-
-	UINTN glyphBufferSize = FontHeader->mode==1? FontHeader->charsize * 256:FontHeader->charsize * 512;
-
-	// Read our buffer
-	void* glyphBuffer;
-	{
-		Font->SetPosition(Font, sizeof(Psf1_Header));
-		SystemTable->BootServices->AllocatePool(EfiLoaderData, glyphBufferSize, (void**)&glyphBuffer);
-		Font->Read(Font, &glyphBufferSize, glyphBuffer);
-	}
-
-	Psf1_Font* FinishedFont;
-	SystemTable->BootServices->AllocatePool(EfiLoaderData, sizeof(Psf1_Font), (void**)&FinishedFont);
-	FinishedFont->psf1_header = FontHeader;
-	FinishedFont->glyphBuffer = glyphBuffer;
-	return FinishedFont;
-}
-
-Psf2_Font* LoadPsf2Font(EFI_FILE* Directory, CHAR16* Path, EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE* SystemTable)
-{
-	EFI_FILE* Font = LoadFile(Directory, Path, ImageHandle, SystemTable);
-	if (Font == NULL) return NULL;
-
-	Psf2_Header* FontHeader = malloc(sizeof(*FontHeader));
-	SystemTable->BootServices->AllocatePool(EfiLoaderData, sizeof(Psf2_Header), (void**)FontHeader);
+	Psf2_Header* FontHeader;
+	SystemTable->BootServices->AllocatePool(EfiLoaderData, sizeof(Psf2_Header), (void**)&FontHeader); // Produces a memory chunk to put the header in
 	UINTN size = sizeof(Psf2_Header);
 	Font->Read(Font, &size, FontHeader);
 
 	// Check if the font is valid
 	if 
-	(FontHeader->magic[0] != PSF2_MAGIC0 
-	|| FontHeader->magic[1] != PSF2_MAGIC1
-	|| FontHeader->magic[2] != PSF2_MAGIC2
-	|| FontHeader->magic[3] != PSF2_MAGIC3)
+	(FontHeader->magic[0] != PSF_MAGIC0 || FontHeader->magic[1] != PSF_MAGIC1 ||
+	 FontHeader->magic[2] != PSF_MAGIC2 || FontHeader->magic[3] != PSF_MAGIC3)
 	{
 		return NULL;
 	}
 
-	UINTN glyphBufferSize = FontHeader->charsize*FontHeader->length;
-
+	UINTN glyphBufferSize = FontHeader->charsize * FontHeader->length;
 	// Read our buffer
 	void* glyphBuffer;
 	{
@@ -214,7 +150,6 @@ Psf2_Font* LoadPsf2Font(EFI_FILE* Directory, CHAR16* Path, EFI_HANDLE ImageHandl
 	SystemTable->BootServices->AllocatePool(EfiLoaderData, sizeof(Psf2_Font), (void**)&FinishedFont);
 	FinishedFont->psf2_header = FontHeader;
 	FinishedFont->glyphBuffer = glyphBuffer;
-	free(FontHeader);
 	return FinishedFont;
 }
 
@@ -230,11 +165,10 @@ int memcmp(const void* aptr, const void* bptr, size_t n)
 	return 0;
 }
 
-
 typedef struct
 {
 	FrameBuffer* Framebuffer;
-	Psf1_Font* psf1_font;
+	Psf2_Font* psf2_font;
 	EFI_MEMORY_DESCRIPTOR* mMap;
 	UINTN mMapSize, mMapDescSize;
 } BootInfo;
@@ -340,27 +274,14 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	// }
 
 	// Calling fonts
-	Psf1_Font* newFont = LoadPsf1Font(NULL, L"zap-light16.psf", ImageHandle, SystemTable);
-	Psf2_Font* newFont2 = LoadPsf2Font(NULL, L"zap-light20.psf", ImageHandle, SystemTable);
-	if (newFont == NULL && newFont2 == NULL)
+	Psf2_Font* newFont = LoadPsf2Font(NULL, L"zap-light20.psf", ImageHandle, SystemTable);
+	if (newFont == NULL)
 	{
-		Print(L"Font not found\n\r");
+		Print(L"Font not found, corrupted or invalid\n\r");
 	}
 	else
 	{
-		if (newFont != NULL) 
-		{
-			Print(L"Psf1 font found, CharSize: %d\n\r", newFont->psf1_header->charsize);		
-		}
-		else
-		{
-			Print(L"Psf1 font not found. Looking for Psf2 font...\n\r");
-		}
-		
-		if (newFont2 != NULL)
-		{
-			Print(L"Psf2 font found, CharSize: %d\n\r", newFont2->psf2_header->charsize);		
-		}
+		Print(L"Font found, CharSize: %d\n\r", newFont->psf2_header->charsize);
 	}
 
 	// Calling our GOP function
@@ -391,7 +312,7 @@ EFI_STATUS efi_main (EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 	// Declaring BootInfo struct
 	BootInfo bootInfo;
 	bootInfo.Framebuffer = newBuffer;
-	bootInfo.psf1_font = newFont;
+	bootInfo.psf2_font = newFont;
 	bootInfo.mMap = Map;
 	bootInfo.mMapSize = MapSize;
 	bootInfo.mMapDescSize = DescriptorSize;

@@ -1,6 +1,6 @@
 #pragma once
 #include "../memory/efiMemory.h"
-#include <stdint.h>
+#include "../util/typedef.h"
 #include "../memory/Bitmap.h"
 #include "../memory/memory.h"
 
@@ -9,21 +9,21 @@ class PageFrameAllocator {
     void ReadEFIMemoryMap(EFI_MEMORY_DESCRIPTOR* mMap, size_t mMapSize, size_t mMapDescSize);
     Bitmap PageBitmap;
     void FreePage(void* address);
-    void FreePages(void* address, uint64_t pageCount);
+    void FreePages(void* address, u64 pageCount);
     void LockPage(void* address);
-    void LockPages(void* address, uint64_t pageCount);
+    void LockPages(void* address, u64 pageCount);
     void* RequestPage();
-    uint64_t GetFreeRAM();
-    uint64_t GetUsedRAM();
-    uint64_t GetReservedRAM();
+    u64 GetFreeRAM();
+    u64 GetUsedRAM();
+    u64 GetReservedRAM();
 
 
     private:
     void InitBitmap(size_t bitmapSize, void* bufferAddress);
     void ReservePage(void* address);
-    void ReservePages(void* address, uint64_t pageCount);
+    void ReservePages(void* address, u64 pageCount);
     void UnreservePage(void* address);
-    void UnreservePages(void* address, uint64_t pageCount);
+    void UnreservePages(void* address, u64 pageCount);
 
 };
 
